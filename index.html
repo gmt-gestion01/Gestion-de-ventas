@@ -41,9 +41,7 @@
                 </h1>
                 <p class="text-slate-400 font-bold text-[11px] uppercase tracking-[0.45em]">Análisis de Eficiencia | 2026</p>
             </div>
-            <div id="status-update" class="text-[10px] font-bold text-emerald-500 bg-emerald-50 px-4 py-2 rounded-full uppercase tracking-widest italic">
-                ● Datos Sincronizados
-            </div>
+            <div class="text-[10px] font-bold text-emerald-500 bg-emerald-50 px-4 py-2 rounded-full uppercase tracking-widest italic">● Datos Sincronizados</div>
         </header>
 
         <div class="glass-card rounded-[3rem] overflow-hidden mb-8 shadow-xl">
@@ -74,52 +72,83 @@
                     </div>
                 </div>
             </div>
+
             <div class="p-10 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 text-center bg-white">
-                <div><p class="stat-label text-blue-600 mb-2">Activación</p><span id="alta_rel" class="text-5xl font-black text-slate-800">0%</span></div>
-                <div><p class="stat-label text-orange-500 mb-2">Tráfico Real</p><span id="trafico_rel" class="text-5xl font-black text-slate-800">0%</span></div>
-                <div><p class="stat-label text-blue-400 mb-2">Promedio ARPU</p><span id="k_arpu" class="text-5xl font-black text-slate-800">$0</span></div>
-                <div><p class="stat-label text-emerald-500 mb-2 italic">Enrolamiento</p><span id="enrol_rel_main" class="text-5xl font-black text-slate-800">0%</span></div>
+                <div class="border-r border-slate-100">
+                    <p class="stat-label text-blue-600 mb-2">Activación (Altas)</p>
+                    <span id="alta_rel" class="text-5xl font-black text-slate-800 tracking-tighter">0%</span>
+                </div>
+                <div class="md:border-r border-slate-100">
+                    <p class="stat-label text-orange-500 mb-2">Tráfico Real</p>
+                    <span id="trafico_rel" class="text-5xl font-black text-slate-800 tracking-tighter">0%</span>
+                </div>
+                <div class="border-r border-slate-100">
+                    <p class="stat-label text-blue-400 mb-2">Promedio ARPU</p>
+                    <span id="k_arpu" class="text-5xl font-black text-slate-800 tracking-tighter">$0</span>
+                </div>
+                <div>
+                    <p class="stat-label text-emerald-500 mb-2 italic">Enrolamiento</p>
+                    <span id="enrol_rel_main" class="text-5xl font-black text-slate-800 tracking-tighter">0%</span>
+                </div>
             </div>
         </div>
 
-        <div class="glass-card p-8 rounded-[2.5rem] mb-8"><div id="g_tendencia" style="height: 400px; width: 100%;"></div></div>
-        <div id="supervisor_grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-20"></div>
+        <div class="glass-card p-8 rounded-[2.5rem] mb-8">
+            <h4 class="stat-label mb-6 italic text-center text-slate-600 uppercase tracking-widest">Tendencia de Ventas</h4>
+            <div id="g_tendencia" style="height: 400px; width: 100%;"></div>
+        </div>
+
+        <div class="mb-20">
+            <h4 class="stat-label mb-6 italic px-4 border-l-4 border-blue-800 ml-2 uppercase tracking-widest text-slate-700">Monitor por Supervisor</h4>
+            <div id="supervisor_grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"></div>
+        </div>
     </div>
 
     <script>
-        // LOGIN CONFIG
         const USER_AUTH = "DIRECCION";
         const PASS_AUTH = "Gmt@2026*";
 
         function checkLogin() {
-            const u = document.getElementById('user').value;
-            const p = document.getElementById('pass').value;
-            if(u === USER_AUTH && p === PASS_AUTH) {
+            if(document.getElementById('user').value === USER_AUTH && document.getElementById('pass').value === PASS_AUTH) {
                 document.getElementById('login-screen').classList.add('hidden');
                 document.getElementById('dashboard-content').classList.remove('hidden');
-                loadDataAutomatic(); // Carga el CSV al entrar
+                loadData();
             } else {
                 document.getElementById('login-err').classList.remove('hidden');
             }
         }
 
-        // CARGA AUTOMÁTICA DEL ARCHIVO "data.csv"
-       async function loadDataAutomatic() {
-    try {
-        // Agregamos un marcador de tiempo (?t=...) para que el navegador no use el archivo guardado en caché
-        const response = await fetch('data.csv?t=' + new Date().getTime()); 
-        if (!response.ok) throw new Error("No se encontró data.csv");
-        const csvText = await response.text();
-        processCSV(csvText);
-    } catch (err) {
-        console.error("Error al cargar datos:", err);
-        alert("Atención: No se pudo cargar el archivo data.csv desde el servidor.");
-    }
-}
+        async function loadData() {
+            try {
+                const res = await fetch('data.csv?v=' + new Date().getTime());
+                const text = await res.text();
+                const lines = text.split(/\r?\n/).filter(l => l.trim() !== "");
+                const sep = lines[0].includes(';') ? ';' : ',';
+                
+                const data = lines.slice(1).map(line => {
+                    const c = line.split(sep).map(x => x.replace(/['"]+/g, '').trim());
+                    if (!c[0]) return null;
 
-       
+                    // Columna 7: Recarga
+                    let recVal = 0;
+                    if(c[7] && !c[7].toUpperCase().includes("SIN")) recVal = parseFloat(c[7].replace(/[^0-9.]/g, '')) || 0;
 
-        // (Funciones de renderizado setStatus y render se mantienen iguales, adaptando el paso de data)
+                    // Lógica según tus datos reales: "SIN ALTA", "CON TRAFICO", "ENROLADO"
+                    return {
+                        dn: c[0],
+                        fVenta: c[1],
+                        supervisor: c[2] || "S/S",
+                        esAlta: c[3] && !c[3].toUpperCase().includes("SIN"),
+                        esTrafico: c[6] && c[6].toUpperCase().includes("TRAFICO"),
+                        esEnrolado: c[8] && c[8].toUpperCase().includes("ENROL"),
+                        recargaVal: recVal
+                    };
+                }).filter(d => d !== null);
+
+                render(data);
+            } catch (e) { alert("Error al leer data.csv"); }
+        }
+
         function setStatus(total, metaUnit, dias, idFlag, idCumple, idGap) {
             const obj = (dias || 1) * metaUnit;
             const cumple = Math.round((total / obj) * 100) || 0;
@@ -129,35 +158,37 @@
             document.getElementById(idFlag).style.backgroundColor = cumple >= 98 ? '#4ade80' : cumple < 89 ? '#f87171' : '#fbbf24';
         }
 
-        function render(globalData) {
-            const total = globalData.length;
-            const dates = [...new Set(globalData.map(d => d.fVenta))].sort();
+        function render(data) {
+            const total = data.length;
+            const dates = [...new Set(data.map(d => d.fVenta))].sort();
             const dias = dates.length || 1;
-            const counts = dates.map(dt => globalData.filter(d => d.fVenta === dt).length);
+            const counts = dates.map(dt => data.filter(d => d.fVenta === dt).length);
 
             document.getElementById('k_bruto').innerText = total;
             document.getElementById('k_ritmo').innerText = `Ritmo: ${Math.round(total/dias)} / día`;
             setStatus(total, 509, dias, 'flag_509', 'k_cumplimiento_509', 'k_gap_509');
             setStatus(total, 604, dias, 'flag_604', 'k_cumplimiento_604', 'k_gap_604');
+
+            document.getElementById('alta_rel').innerText = (total > 0 ? Math.round((data.filter(d => d.esAlta).length / total) * 100) : 0) + "%";
+            document.getElementById('trafico_rel').innerText = (total > 0 ? Math.round((data.filter(d => d.esTrafico).length / total) * 100) : 0) + "%";
             
-            document.getElementById('alta_rel').innerText = (total > 0 ? Math.round((globalData.filter(d => d.esAlta).length / total) * 100) : 0) + "%";
-            document.getElementById('trafico_rel').innerText = (total > 0 ? Math.round((globalData.filter(d => d.esTrafico).length / total) * 100) : 0) + "%";
-            
-            const recs = globalData.filter(d => d.recargaVal > 0);
+            const recs = data.filter(d => d.recargaVal > 0);
             document.getElementById('k_arpu').innerText = "$" + (recs.length > 0 ? Math.round(recs.reduce((s, d) => s + d.recargaVal, 0) / recs.length) : 0);
-            document.getElementById('enrol_rel_main').innerText = (total > 0 ? Math.round((globalData.filter(d => d.esEnrolado).length / total) * 100) : 0) + "%";
+            document.getElementById('enrol_rel_main').innerText = (total > 0 ? Math.round((data.filter(d => d.esEnrolado).length / total) * 100) : 0) + "%";
 
-            Plotly.newPlot('g_tendencia', [
-                { x: dates, y: counts, name: 'Reales', type: 'scatter', mode: 'lines+markers', line: {color: '#1e3a8a', width: 3} }
-            ], { paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', height: 400 });
+            Plotly.newPlot('g_tendencia', [{
+                x: dates, y: counts, type: 'scatter', mode: 'lines+markers',
+                line: {color: '#1e3a8a', width: 3, shape: 'spline'},
+                fill: 'tozeroy', fillcolor: 'rgba(30, 58, 138, 0.05)'
+            }], { paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', margin: {t:10} });
 
-            const supers = [...new Set(globalData.map(d => d.supervisor))].sort();
+            const supers = [...new Set(data.map(d => d.supervisor))].sort();
             document.getElementById('supervisor_grid').innerHTML = supers.map(s => {
-                const dSup = globalData.filter(x => x.supervisor === s);
+                const dSup = data.filter(x => x.supervisor === s);
                 const v = dSup.length;
                 return `
                     <div class="sup-card p-6">
-                        <p class="text-[11px] font-black text-blue-900 border-b pb-2 mb-4 uppercase italic italic tracking-tighter">${s}</p>
+                        <p class="text-[11px] font-black text-blue-900 border-b pb-2 mb-4 uppercase italic tracking-tighter">${s}</p>
                         <p class="text-3xl font-black text-slate-800 text-center">${v}</p>
                         <div class="grid grid-cols-3 gap-2 mt-4">
                             <div class="bg-blue-50 p-2 rounded-xl text-center"><p class="stat-label text-[6px]">Alta</p><p class="text-[11px] font-black">${Math.round((dSup.filter(x=>x.esAlta).length/v)*100)||0}%</p></div>
@@ -169,7 +200,4 @@
         }
     </script>
 </body>
-
 </html>
-
-
