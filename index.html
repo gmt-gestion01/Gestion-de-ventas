@@ -10,7 +10,6 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #334155; -webkit-tap-highlight-color: transparent; }
         
-        /* Gradiantes Originales */
         .bg-main-dark { background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%); }
         .bg-movistar { background: linear-gradient(135deg, #065f46 0%, #10b981 100%); }
         .bg-gmt { background: linear-gradient(135deg, #9a3412 0%, #f97316 100%); }
@@ -20,7 +19,6 @@
         .flag-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 8px; border: 2px solid rgba(255,255,255,0.2); }
         .sup-card { transition: all 0.2s; border: 1px solid #e2e8f0; border-radius: 2.5rem; background: white; overflow: hidden; }
 
-        /* Estilos de Login */
         #login-screen { background: #0f172a; display: flex; align-items: center; justify-content: center; position: fixed; inset: 0; z-index: 100; }
         .hidden { display: none !important; }
     </style>
@@ -50,17 +48,14 @@
             </div>
             
             <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-                <select id="month_filter" onchange="render()" class="bg-white border-2 border-slate-200 px-6 py-3 rounded-xl text-xs font-black uppercase text-slate-700 outline-none focus:border-blue-500 shadow-sm cursor-pointer">
-                    <option value="ALL">CARGANDO...</option>
-                </select>
+                <select id="month_filter" onchange="render()" class="bg-white border-2 border-slate-200 px-6 py-3 rounded-xl text-xs font-black uppercase text-slate-700 outline-none shadow-sm cursor-pointer"></select>
                 <label class="bg-blue-800 px-8 py-3 rounded-xl text-xs font-black cursor-pointer text-white shadow-lg text-center uppercase">
                     📂 Cargar CSV <input type="file" id="local_file" accept=".csv" class="hidden">
                 </label>
             </div>
         </header>
 
-        <div id="kpi_main_area" class="glass-card rounded-[3rem] overflow-hidden mb-8 shadow-xl">
-            </div>
+        <div id="kpi_main_area" class="glass-card rounded-[3rem] overflow-hidden mb-8 shadow-xl"></div>
 
         <div class="glass-card p-8 rounded-[2.5rem] mb-8">
             <h4 class="stat-label mb-6 italic text-center text-slate-600 uppercase">Tendencia de Ventas vs Metas</h4>
@@ -83,26 +78,21 @@
         const PASS_AUTH = "Gmt@2026*";
         let globalRawData = [];
 
-        // 1. GESTIÓN DE LOGIN
         function checkLogin() {
             if(document.getElementById('user').value === USER_AUTH && document.getElementById('pass').value === PASS_AUTH) {
                 document.getElementById('login-screen').classList.add('hidden');
                 document.getElementById('dashboard-content').classList.remove('hidden');
-                autoLoadCSV(); // Carga automática al entrar
-            } else { 
-                document.getElementById('login-err').classList.remove('hidden'); 
-            }
+                autoLoadCSV();
+            } else { document.getElementById('login-err').classList.remove('hidden'); }
         }
 
-        // 2. CARGA AUTOMÁTICA DEL ARCHIVO
         async function autoLoadCSV() {
             try {
                 const response = await fetch('data.csv?v=' + Date.now());
                 if (response.ok) processData(await response.text());
-            } catch (e) { console.log("Esperando carga manual o archivo en servidor."); }
+            } catch (e) { console.log("Sin archivo data.csv en servidor."); }
         }
 
-        // 3. CARGA MANUAL
         document.getElementById('local_file').onchange = e => {
             const reader = new FileReader();
             reader.onload = evt => processData(evt.target.result);
@@ -118,27 +108,32 @@
             globalRawData = lines.slice(1).map(line => {
                 const c = line.split(sep).map(x => x.replace(/['"]+/g, '').trim());
                 if (!c[0]) return null;
-                let m = 0; 
-                if(c[7] && !c[7].toUpperCase().includes("SIN")) m = parseFloat(c[7].replace(/[^0-9.]/g, '')) || 0;
                 
-                return { 
-                    fVenta: c[1], 
-                    supervisor: c[2] || "S/S", 
-                    esAlta: c[3] && c[3].toUpperCase() !== "" && !c[3].toUpperCase().includes("SIN"),
-                    esTrafico: c[6] && (c[6].toUpperCase().includes("SI") || c[6].toUpperCase().includes("TRAFICO")),
-                    esEnrolado: c[8] && (c[8].toUpperCase().includes("SI") || c[8].toUpperCase().includes("ENROL")),
-                    recargaTxt: c[7] || "SIN RECARGA", 
-                    recargaVal: m,
-                    mes: mesIdx !== -1 ? c[mesIdx].toLowerCase() : "sin mes"
+                // Lógica de detección según tus columnas
+                const esAltaReal = c[3] && c[3].toUpperCase() !== "SIN ALTA" && c[3] !== "";
+                const esActivacion = c[4] && c[4].toUpperCase().includes("ACTIVACION");
+                const esTrafico = c[6] && c[6].toUpperCase().includes("TRAFICO");
+                const esEnrolado = c[8] && c[8].toUpperCase().includes("ENROLADO");
+                
+                let recVal = 0;
+                if(c[7] && !c[7].toUpperCase().includes("SIN")) recVal = parseFloat(c[7].replace(/[^0-9.]/g, '')) || 0;
+
+                return {
+                    fVenta: c[1],
+                    supervisor: c[2] || "S/S",
+                    esAltaReal,
+                    esActivacion,
+                    esTrafico,
+                    esEnrolado,
+                    recargaTxt: c[7] || "SIN RECARGA",
+                    recargaVal: recVal,
+                    mes: mesIdx !== -1 ? c[mesIdx].toLowerCase() : "febrero"
                 };
             }).filter(d => d !== null);
 
-            // Poblar Selector de Mes
             const meses = [...new Set(globalRawData.map(d => d.mes))].sort();
             const selector = document.getElementById('month_filter');
             selector.innerHTML = meses.map(m => `<option value="${m}">${m.toUpperCase()}</option>`).join('');
-            
-            // Seleccionar el último mes por defecto
             if(meses.length > 0) selector.value = meses[meses.length - 1];
 
             render();
@@ -151,7 +146,6 @@
             const dates = [...new Set(data.map(d => d.fVenta))].sort();
             const dias = dates.length || 1;
 
-            // Lógica de Metas
             const calcMeta = (t, m) => {
                 const obj = dias * m;
                 const perc = Math.round((t/obj)*100) || 0;
@@ -160,49 +154,70 @@
             const mov = calcMeta(total, 509);
             const gmt = calcMeta(total, 604);
 
-            // Inyectar KPIs (Diseño Original)
+            // KPIs con indicador de UNIDADES (Registros)
             document.getElementById('kpi_main_area').innerHTML = `
                 <div class="grid grid-cols-1 md:grid-cols-3 text-white text-center italic font-black">
                     <div class="bg-main-dark p-10 md:border-r border-white/10">
                         <p class="text-[10px] font-black uppercase tracking-[0.2em] text-blue-200 mb-2">Ventas Brutas</p>
                         <h2 class="text-7xl leading-none">${total}</h2>
-                        <span class="text-[11px] font-bold text-blue-300/80 uppercase">Ritmo: ${Math.round(total/dias)} / día</span>
+                        <span class="text-[11px] font-bold text-blue-300/80 uppercase italic">Unidades Totales</span>
                     </div>
                     <div class="bg-movistar p-10 md:border-r border-white/10">
-                        <p class="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-100 mb-2">Meta Movistar (509)</p>
+                        <p class="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-100 mb-2">Meta Movistar</p>
                         <div class="flex flex-col items-center">
                             <div class="flex items-center mb-1"><span class="flag-dot" style="background:${mov.color}"></span><h2 class="text-6xl">${mov.perc}%</h2></div>
                             <span class="text-3xl text-white/90">${(mov.gap >= 0 ? "+" : "") + mov.gap}</span>
                         </div>
                     </div>
                     <div class="bg-gmt p-10">
-                        <p class="text-[10px] font-black uppercase tracking-[0.2em] text-orange-100 mb-2">Meta GMT (604)</p>
+                        <p class="text-[10px] font-black uppercase tracking-[0.2em] text-orange-100 mb-2">Meta GMT</p>
                         <div class="flex flex-col items-center">
                             <div class="flex items-center mb-1"><span class="flag-dot" style="background:${gmt.color}"></span><h2 class="text-6xl">${gmt.perc}%</h2></div>
                             <span class="text-3xl text-white/90">${(gmt.gap >= 0 ? "+" : "") + gmt.gap}</span>
                         </div>
                     </div>
                 </div>
-                <div class="p-10 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 text-center bg-white">
-                    <div class="border-r border-slate-100"><p class="stat-label text-blue-600 mb-2">Activación</p><span class="text-5xl font-black text-slate-800">${total>0?Math.round((data.filter(d=>d.esAlta).length/total)*100):0}%</span></div>
-                    <div class="md:border-r border-slate-100"><p class="stat-label text-orange-500 mb-2">Tráfico</p><span class="text-5xl font-black text-slate-800">${total>0?Math.round((data.filter(d=>d.esTrafico).length/total)*100):0}%</span></div>
-                    <div class="border-r border-slate-100"><p class="stat-label text-blue-400 mb-2">ARPU</p><span class="text-5xl font-black text-slate-800">$${data.filter(d=>d.recargaVal>0).length > 0 ? Math.round(data.filter(d=>d.recargaVal>0).reduce((s,d)=>s+d.recargaVal,0)/data.filter(d=>d.recargaVal>0).length) : 0}</span></div>
-                    <div><p class="stat-label text-emerald-500 mb-2">Enrolado</p><span class="text-5xl font-black text-slate-800">${total>0?Math.round((data.filter(d=>d.esEnrolado).length/total)*100):0}%</span></div>
+                <div class="p-10 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-6 text-center bg-white">
+                    <div class="border-r border-slate-100">
+                        <p class="stat-label text-blue-600 mb-2">Activación</p>
+                        <span class="text-4xl font-black text-slate-800">${total>0?Math.round((data.filter(d=>d.esActivacion).length/total)*100):0}%</span>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">${data.filter(d=>d.esActivacion).length} Registros</p>
+                    </div>
+                    <div class="md:border-r border-slate-100">
+                        <p class="stat-label text-blue-800 mb-2">Alta Real</p>
+                        <span class="text-4xl font-black text-slate-800">${total>0?Math.round((data.filter(d=>d.esAltaReal).length/total)*100):0}%</span>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">${data.filter(d=>d.esAltaReal).length} Registros</p>
+                    </div>
+                    <div class="border-r border-slate-100">
+                        <p class="stat-label text-orange-500 mb-2">Tráfico</p>
+                        <span class="text-4xl font-black text-slate-800">${total>0?Math.round((data.filter(d=>d.esTrafico).length/total)*100):0}%</span>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">${data.filter(d=>d.esTrafico).length} Registros</p>
+                    </div>
+                    <div class="border-r border-slate-100">
+                        <p class="stat-label text-blue-400 mb-2">ARPU</p>
+                        <span class="text-4xl font-black text-slate-800">$${data.filter(d=>d.recargaVal>0).length > 0 ? Math.round(data.filter(d=>d.recargaVal>0).reduce((s,d)=>s+d.recargaVal,0)/data.filter(d=>d.recargaVal>0).length) : 0}</span>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">${data.filter(d=>d.recargaVal>0).length} Recargados</p>
+                    </div>
+                    <div>
+                        <p class="stat-label text-emerald-500 mb-2">Enrolado</p>
+                        <span class="text-4xl font-black text-slate-800">${total>0?Math.round((data.filter(d=>d.esEnrolado).length/total)*100):0}%</span>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">${data.filter(d=>d.esEnrolado).length} Registros</p>
+                    </div>
                 </div>`;
 
             // Gráfica
             const counts = dates.map(dt => data.filter(d => d.fVenta === dt).length);
             Plotly.newPlot('g_tendencia', [
                 { x: dates, y: counts, type: 'scatter', mode: 'lines+markers+text', text: counts, textposition: 'top center', line: {color: '#1e3a8a', width: 3, shape: 'spline'} },
-                { x: dates, y: dates.map(() => 604), name: 'Meta', line: {color: '#f97316', dash: 'dash'} }
-            ], { paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', margin: {t:30, b:40, l:40, r:20}, showlegend: false }, {responsive: true});
+                { x: dates, y: dates.map(() => 604), name: 'Meta GMT', line: {color: '#f97316', dash: 'dash'} }
+            ], { paper_bgcolor: 'rgba(0,0,0,0)', margin: {t:30, b:40, l:40, r:20}, showlegend: false }, {responsive: true});
 
             // Recargas
             const recMap = {};
             data.forEach(d => { recMap[d.recargaTxt] = (recMap[d.recargaTxt] || 0) + 1; });
             document.getElementById('recarga_list').innerHTML = Object.entries(recMap).sort((a,b)=>b[1]-a[1]).map(([l,v]) => `
-                <div class="p-4 bg-slate-50 rounded-2xl flex justify-between items-center border border-slate-100">
-                    <div><p class="text-[10px] font-black text-slate-400 mb-1 uppercase">${l}</p><p class="text-[12px] font-bold text-blue-500">${Math.round((v/total)*100)}%</p></div>
+                <div class="p-4 bg-slate-50 rounded-2xl flex justify-between items-center border border-slate-100 shadow-sm">
+                    <div><p class="text-[10px] font-black text-slate-400 uppercase leading-none mb-1">${l}</p><p class="text-[12px] font-bold text-blue-500">${Math.round((v/total)*100)}%</p></div>
                     <p class="text-lg font-black text-slate-800">${v}</p>
                 </div>`).join('');
 
@@ -216,9 +231,9 @@
                         <p class="text-[11px] font-black text-blue-900 border-b pb-2 mb-4 uppercase italic text-center">${s}</p>
                         <p class="text-3xl font-black text-slate-800 text-center mb-4">${v}</p>
                         <div class="grid grid-cols-3 gap-2">
-                            <div class="bg-blue-50 p-2 rounded-xl text-center"><p class="stat-label text-[6px]">Alta</p><p class="text-[10px] font-black">${Math.round((dSup.filter(x=>x.esAlta).length/v)*100)||0}%</p></div>
-                            <div class="bg-orange-50 p-2 rounded-xl text-center"><p class="stat-label text-[6px]">Traf</p><p class="text-[10px] font-black">${Math.round((dSup.filter(x=>x.esTrafico).length/v)*100)||0}%</p></div>
-                            <div class="bg-emerald-50 p-2 rounded-xl text-center"><p class="stat-label text-[6px]">Enrol</p><p class="text-[10px] font-black">${Math.round((dSup.filter(x=>x.esEnrolado).length/v)*100)||0}%</p></div>
+                            <div class="bg-blue-50 p-2 rounded-xl text-center"><p class="stat-label text-[6px]">Act.</p><p class="text-[10px] font-black">${Math.round((dSup.filter(x=>x.esActivacion).length/v)*100)||0}%</p></div>
+                            <div class="bg-orange-50 p-2 rounded-xl text-center"><p class="stat-label text-[6px]">Traf.</p><p class="text-[10px] font-black">${Math.round((dSup.filter(x=>x.esTrafico).length/v)*100)||0}%</p></div>
+                            <div class="bg-emerald-50 p-2 rounded-xl text-center"><p class="stat-label text-[6px]">Enrol.</p><p class="text-[10px] font-black">${Math.round((dSup.filter(x=>x.esEnrolado).length/v)*100)||0}%</p></div>
                         </div>
                     </div>`;
             }).join('');
