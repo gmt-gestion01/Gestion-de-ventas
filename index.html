@@ -104,18 +104,18 @@
         }
 
         // CARGA AUTOMÁTICA DEL ARCHIVO "data.csv"
-        async function loadDataAutomatic() {
-            try {
-                // Buscamos el archivo data.csv en la misma carpeta
-                const response = await fetch('data.csv'); 
-                if (!response.ok) throw new Error("No se encontró data.csv");
-                const csvText = await response.text();
-                processCSV(csvText);
-            } catch (err) {
-                console.error("Error al cargar datos:", err);
-                alert("Atención: No se pudo cargar el archivo data.csv desde el servidor.");
-            }
-        }
+       async function loadDataAutomatic() {
+    try {
+        // Agregamos un marcador de tiempo (?t=...) para que el navegador no use el archivo guardado en caché
+        const response = await fetch('data.csv?t=' + new Date().getTime()); 
+        if (!response.ok) throw new Error("No se encontró data.csv");
+        const csvText = await response.text();
+        processCSV(csvText);
+    } catch (err) {
+        console.error("Error al cargar datos:", err);
+        alert("Atención: No se pudo cargar el archivo data.csv desde el servidor.");
+    }
+}
 
         function processCSV(text) {
             const lines = text.split(/\r?\n/).filter(l => l.trim() !== "");
@@ -185,4 +185,5 @@
         }
     </script>
 </body>
+
 </html>
