@@ -15,16 +15,7 @@
         .stat-label { font-size: 0.65rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; }
         .flag-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 8px; border: 2px solid rgba(255,255,255,0.2); }
         .sup-card { transition: all 0.2s; border: 1px solid #e2e8f0; border-radius: 2rem; background: white; }
-        
-        #login-screen { 
-            background: #0f172a; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            position: fixed; 
-            inset: 0; 
-            z-index: 100; 
-        }
+        #login-screen { background: #0f172a; display: flex; align-items: center; justify-content: center; position: fixed; inset: 0; z-index: 100; }
         .hidden { display: none !important; }
     </style>
 </head>
@@ -45,17 +36,15 @@
     <div id="dashboard-content" class="max-w-7xl mx-auto hidden">
         <header class="flex flex-col lg:flex-row justify-between items-center gap-6 mb-10">
             <div class="text-center lg:text-left">
-                <h1 class="text-6xl font-black tracking-tighter uppercase italic py-2" 
-                    style="filter: drop-shadow(0px 10px 8px rgba(0,0,0,0.1));">
-                    <span style="background: linear-gradient(180deg, #ff9d42 0%, #ff6b00 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-shadow: 1px 1px 0px #b45309, 2px 2px 0px #92400e; display: inline-block;">GMT</span>
-                    <span style="background: linear-gradient(180deg, #58a5ff 0%, #0056ce 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-shadow: 1px 1px 0px #1e40af, 2px 2px 0px #1e3a8a; display: inline-block; margin-left: 2px;">AUDITORÍA</span>
+                <h1 class="text-6xl font-black tracking-tighter uppercase italic py-2">
+                    <span style="background: linear-gradient(180deg, #ff9d42 0%, #ff6b00 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">GMT</span>
+                    <span style="background: linear-gradient(180deg, #58a5ff 0%, #0056ce 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">PREPAGO</span>
                 </h1>
-                <p class="text-slate-400 font-bold text-[11px] uppercase tracking-[0.45em] mt-[-4px] pl-1">Horas de Conexión | 2026</p>
+                <p class="text-slate-400 font-bold text-[11px] uppercase tracking-[0.45em]">Análisis de Eficiencia | 2026</p>
             </div>
-            
             <div class="flex gap-3">
-                <label class="bg-blue-800 hover:bg-blue-700 px-8 py-3 rounded-xl text-xs font-black cursor-pointer transition-all uppercase text-white shadow-lg hover:shadow-blue-900/20 active:scale-95">
-                    📂 Cargar Auditoría
+                <label class="bg-blue-800 hover:bg-blue-700 px-8 py-3 rounded-xl text-xs font-black cursor-pointer transition-all uppercase text-white shadow-lg">
+                    📂 Actualizar CSV
                     <input type="file" id="local_file" accept=".csv" class="hidden">
                 </label>
             </div>
@@ -64,77 +53,31 @@
         <div class="glass-card rounded-[3rem] overflow-hidden mb-8 shadow-xl">
             <div class="grid grid-cols-1 md:grid-cols-3 text-white text-center">
                 <div class="bg-main-dark p-10 md:border-r border-white/10">
-                    <p class="text-[10px] font-black uppercase tracking-[0.2em] text-blue-200 mb-2">Total Horas</p>
-                    <h2 id="k_bruto" class="text-7xl font-black italic leading-none">0h</h2>
-                    <span id="k_ritmo" class="text-[11px] font-bold text-blue-300/80 uppercase tracking-tighter">Ritmo: 0h / día</span>
+                    <p class="stat-label text-blue-200 mb-2">Ventas Brutas</p>
+                    <h2 id="k_bruto" class="text-7xl font-black italic leading-none">0</h2>
                 </div>
                 <div class="bg-movistar p-10 md:border-r border-white/10">
-                    <p class="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-100 mb-2">Meta Movistar (509h)</p>
-                    <div class="flex flex-col items-center">
-                        <div class="flex items-center mb-1">
-                            <span id="flag_509" class="flag-dot bg-slate-400"></span>
-                            <h2 id="k_cumplimiento_509" class="text-6xl font-black italic">0%</h2>
-                        </div>
-                        <span id="k_gap_509" class="text-3xl font-black text-white/90">0</span>
-                    </div>
+                    <p class="stat-label text-emerald-100 mb-2">Meta Movistar (509)</p>
+                    <h2 id="k_cumplimiento_509" class="text-6xl font-black italic">0%</h2>
                 </div>
                 <div class="bg-gmt p-10">
-                    <p class="text-[10px] font-black uppercase tracking-[0.2em] text-orange-100 mb-2">Meta GMT (604h)</p>
-                    <div class="flex flex-col items-center">
-                        <div class="flex items-center mb-1">
-                            <span id="flag_604" class="flag-dot bg-slate-400"></span>
-                            <h2 id="k_cumplimiento_604" class="text-6xl font-black italic">0%</h2>
-                        </div>
-                        <span id="k_gap_604" class="text-3xl font-black text-white/90">0</span>
-                    </div>
+                    <p class="stat-label text-orange-100 mb-2">Meta GMT (604)</p>
+                    <h2 id="k_cumplimiento_604" class="text-6xl font-black italic">0%</h2>
                 </div>
             </div>
-
-            <div class="p-10 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 text-center bg-white">
-                <div class="border-r border-slate-100">
-                    <p class="stat-label text-emerald-600 mb-2">Horas Prepago</p>
-                    <div class="flex items-baseline justify-center gap-2">
-                        <span id="pre_rel" class="text-5xl font-black text-slate-800 tracking-tighter">0%</span>
-                        <span id="pre_abs" class="text-[11px] font-bold text-slate-400">0h</span>
-                    </div>
-                </div>
-                <div class="md:border-r border-slate-100">
-                    <p class="stat-label text-blue-500 mb-2">Horas Pospago</p>
-                    <div class="flex items-baseline justify-center gap-2">
-                        <span id="pos_rel" class="text-5xl font-black text-slate-800 tracking-tighter">0%</span>
-                        <span id="pos_abs" class="text-[11px] font-bold text-slate-400">0h</span>
-                    </div>
-                </div>
-                <div class="border-r border-slate-100">
-                    <p class="stat-label text-slate-400 mb-2">Horas Otros</p>
-                    <div class="flex items-baseline justify-center gap-2">
-                        <span id="oth_rel" class="text-5xl font-black text-slate-800 tracking-tighter">0%</span>
-                        <span id="oth_abs" class="text-[11px] font-bold text-slate-400">0h</span>
-                    </div>
-                </div>
-                <div>
-                    <p class="stat-label text-orange-500 mb-2 italic">Días Operativos</p>
-                    <div class="flex items-baseline justify-center gap-2">
-                        <span id="dias_count" class="text-5xl font-black text-slate-800 tracking-tighter">0</span>
-                    </div>
-                </div>
+            <div class="p-10 grid grid-cols-2 md:grid-cols-4 gap-8 text-center bg-white">
+                <div><p class="stat-label text-blue-600 mb-2">Altas</p><span id="alta_rel" class="text-4xl font-black">0%</span></div>
+                <div><p class="stat-label text-orange-500 mb-2">Tráfico</p><span id="trafico_rel" class="text-4xl font-black">0%</span></div>
+                <div><p class="stat-label text-blue-400 mb-2">ARPU</p><span id="k_arpu" class="text-4xl font-black">$0</span></div>
+                <div><p class="stat-label text-emerald-500 mb-2">Enrolado</p><span id="enrol_rel_main" class="text-4xl font-black">0%</span></div>
             </div>
         </div>
 
         <div class="glass-card p-8 rounded-[2.5rem] mb-8">
-            <h4 class="stat-label mb-6 italic text-center text-slate-600 uppercase tracking-widest">Tendencia de Horas por Categoría</h4>
             <div id="g_tendencia" style="height: 400px; width: 100%;"></div>
         </div>
 
-        <div class="glass-card rounded-[2.5rem] p-8 border-t-4 border-orange-500 mb-12">
-            <h4 class="stat-label mb-8 italic text-center text-slate-800 border-b pb-2 uppercase tracking-widest">Distribución por Campaña</h4>
-            <div id="recarga_list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
-        </div>
-
-        <div class="mb-20">
-            <h4 class="stat-label mb-6 italic px-4 border-l-4 border-blue-800 ml-2 uppercase tracking-widest text-slate-700">Horas por Supervisor / Gerencia</h4>
-            <div id="supervisor_grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"></div>
-        </div>
+        <div id="supervisor_grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-20"></div>
     </div>
 
     <script>
@@ -143,163 +86,78 @@
         let globalData = [];
 
         function checkLogin() {
-            const u = document.getElementById('user').value;
-            const p = document.getElementById('pass').value;
-            if(u === USER_AUTH && p === PASS_AUTH) {
+            if(document.getElementById('user').value === USER_AUTH && document.getElementById('pass').value === PASS_AUTH) {
                 document.getElementById('login-screen').classList.add('hidden');
                 document.getElementById('dashboard-content').classList.remove('hidden');
+                autoLoadCSV(); // Carga automática al entrar
             } else {
                 document.getElementById('login-err').classList.remove('hidden');
             }
         }
 
-        // Función auxiliar para convertir HH:MM:SS a Segundos
-        function tToSec(t) {
-            if (!t || t === "0" || t === "N/D" || t === "00:00:00") return 0;
-            const p = t.split(':'); 
-            if (p.length !== 3) return 0;
-            return (+p[0]) * 3600 + (+p[1]) * 60 + (+p[2]);
+        async function autoLoadCSV() {
+            try {
+                const response = await fetch('data.csv?v=' + Date.now());
+                if (!response.ok) return;
+                const text = await response.text();
+                processData(text);
+            } catch (e) { console.error("Error cargando CSV inicial"); }
         }
 
         document.getElementById('local_file').onchange = e => {
             const file = e.target.files[0];
-            if (!file) return;
             const reader = new FileReader();
-            reader.onload = evt => {
-                const lines = evt.target.result.split(/\r?\n/).filter(l => l.trim() !== "");
-                const sep = lines[0].includes(';') ? ';' : ',';
-                
-                // Extraer fechas de las cabeceras (columna 10 en adelante / index 9)
-                const headers = lines[0].split(sep).map(h => h.replace(/['"]+/g, '').trim());
-                const dateCols = headers.slice(9);
-
-                globalData = [];
-                lines.slice(1).forEach(line => {
-                    const c = line.split(sep).map(x => x.replace(/['"]+/g, '').trim());
-                    if (!c[0]) return;
-
-                    const gerencia = c[3] || "SIN GERENCIA";
-                    const campanaRaw = c[4] || "SIN CAMPAÑA";
-                    const campanaUpper = campanaRaw.toUpperCase();
-                    
-                    // Clasificación por Columna E
-                    let cat = "OTROS";
-                    if(campanaUpper.includes("PREPAGO")) cat = "PREPAGO";
-                    else if(campanaUpper.includes("POS")) cat = "POSPAGO";
-
-                    // Recorrer columnas de fechas
-                    c.slice(9).forEach((val, idx) => {
-                        const s = tToSec(val);
-                        if(s > 0) {
-                            globalData.push({
-                                fVenta: dateCols[idx],
-                                supervisor: gerencia,
-                                campana: campanaRaw,
-                                categoria: cat,
-                                segundos: s
-                            });
-                        }
-                    });
-                });
-                render();
-            };
+            reader.onload = evt => processData(evt.target.result);
             reader.readAsText(file);
         };
 
-        function setStatus(total, metaUnit, dias, idFlag, idCumple, idGap) {
-            const obj = (dias || 1) * metaUnit;
-            const cumple = Math.round((total / obj) * 100) || 0;
-            const gap = Math.round(total - obj);
-            document.getElementById(idCumple).innerText = cumple + "%";
-            document.getElementById(idGap).innerText = (gap >= 0 ? "+" : "") + gap + "h";
-            document.getElementById(idFlag).style.backgroundColor = cumple >= 95 ? '#4ade80' : cumple < 80 ? '#f87171' : '#fbbf24';
+        function processData(text) {
+            const lines = text.split(/\r?\n/).filter(l => l.trim() !== "");
+            const sep = lines[0].includes(';') ? ';' : ',';
+            globalData = lines.slice(1).map(line => {
+                const c = line.split(sep).map(x => x.replace(/['"]+/g, '').trim());
+                if (!c[0]) return null;
+                
+                // Limpieza de datos específica para tu archivo
+                let m = 0; if(c[7] && !c[7].toUpperCase().includes("SIN")) m = parseFloat(c[7].replace(/[^0-9.]/g, '')) || 0;
+                const esAlta = c[3] && !c[3].toUpperCase().includes("SIN");
+                const esTrafico = c[6] && c[6].toUpperCase().includes("TRAFICO");
+                const esEnrolado = c[8] && c[8].toUpperCase().includes("ENROL");
+
+                return { fVenta: c[1], supervisor: c[2] || "S/S", esAlta, esTrafico, esEnrolado, recargaVal: m };
+            }).filter(d => d !== null);
+            render();
         }
 
         function render() {
-            const totalSeg = globalData.reduce((a, b) => a + b.segundos, 0);
-            const totalHrs = totalSeg / 3600;
-            
+            const total = globalData.length;
             const dates = [...new Set(globalData.map(d => d.fVenta))].sort();
+            document.getElementById('k_bruto').innerText = total;
+            
+            // Metas (basadas en días detectados)
             const dias = dates.length || 1;
+            document.getElementById('k_cumplimiento_509').innerText = Math.round((total/(dias*509))*100) + "%";
+            document.getElementById('k_cumplimiento_604').innerText = Math.round((total/(dias*604))*100) + "%";
 
-            document.getElementById('k_bruto').innerText = totalHrs.toFixed(1) + "h";
-            document.getElementById('k_ritmo').innerText = `Ritmo: ${(totalHrs/dias).toFixed(1)}h / día`;
-            document.getElementById('dias_count').innerText = dias;
+            // Porcentajes
+            document.getElementById('alta_rel').innerText = Math.round((globalData.filter(d=>d.esAlta).length/total)*100) + "%";
+            document.getElementById('trafico_rel').innerText = Math.round((globalData.filter(d=>d.esTrafico).length/total)*100) + "%";
+            document.getElementById('enrol_rel_main').innerText = Math.round((globalData.filter(d=>d.esEnrolado).length/total)*100) + "%";
+            
+            const recs = globalData.filter(d => d.recargaVal > 0);
+            document.getElementById('k_arpu').innerText = "$" + (recs.length > 0 ? Math.round(recs.reduce((s,d)=>s+d.recargaVal,0)/recs.length) : 0);
 
-            setStatus(totalHrs, 509, dias, 'flag_509', 'k_cumplimiento_509', 'k_gap_509');
-            setStatus(totalHrs, 604, dias, 'flag_604', 'k_cumplimiento_604', 'k_gap_604');
+            // Gráfica
+            const counts = dates.map(dt => globalData.filter(d => d.fVenta === dt).length);
+            Plotly.newPlot('g_tendencia', [{ x: dates, y: counts, type: 'scatter', mode: 'lines+markers', line: {color: '#1e3a8a'} }], { title: 'Ventas por Día' });
 
-            // Cálculos por categoría
-            const sPre = globalData.filter(d => d.categoria === "PREPAGO").reduce((a, b) => a + b.segundos, 0) / 3600;
-            const sPos = globalData.filter(d => d.categoria === "POSPAGO").reduce((a, b) => a + b.segundos, 0) / 3600;
-            const sOth = globalData.filter(d => d.categoria === "OTROS").reduce((a, b) => a + b.segundos, 0) / 3600;
-
-            document.getElementById('pre_rel').innerText = Math.round((sPre / (totalHrs || 1)) * 100) + "%";
-            document.getElementById('pre_abs').innerText = sPre.toFixed(1) + "h";
-            document.getElementById('pos_rel').innerText = Math.round((sPos / (totalHrs || 1)) * 100) + "%";
-            document.getElementById('pos_abs').innerText = sPos.toFixed(1) + "h";
-            document.getElementById('oth_rel').innerText = Math.round((sOth / (totalHrs || 1)) * 100) + "%";
-            document.getElementById('oth_abs').innerText = sOth.toFixed(1) + "h";
-
-            // Gráfica de tendencia (Líneas por Categoría)
-            const getTrend = (cat) => dates.map(dt => {
-                const s = globalData.filter(d => d.fVenta === dt && (cat === 'TOTAL' ? true : d.categoria === cat))
-                                    .reduce((a, b) => a + b.segundos, 0);
-                return (s / 3600).toFixed(2);
-            });
-
-            Plotly.newPlot('g_tendencia', [
-                { x: dates, y: getTrend('TOTAL'), name: 'Total Horas', type: 'scatter', mode: 'lines+markers', line: {color: '#1e3a8a', width: 4} },
-                { x: dates, y: getTrend('PREPAGO'), name: 'Prepago', type: 'scatter', mode: 'lines', line: {color: '#10b981', dash: 'dot'} },
-                { x: dates, y: getTrend('POSPAGO'), name: 'Pospago', type: 'scatter', mode: 'lines', line: {color: '#3b82f6', dash: 'dot'} },
-                { x: dates, y: dates.map(() => 604), name: 'Meta GMT', line: {color: '#f97316', dash: 'dash', width: 1} }
-            ], { 
-                paper_bgcolor: 'rgba(0,0,0,0)', 
-                plot_bgcolor: 'rgba(0,0,0,0)', 
-                margin: {t:20, r:20, b:40, l:40},
-                legend: { orientation: 'h', y: -0.2 }
-            });
-
-            // Distribución por Campaña (Lista)
-            const campMap = {};
-            globalData.forEach(d => { campMap[d.campana] = (campMap[d.campana] || 0) + (d.segundos / 3600); });
-            document.getElementById('recarga_list').innerHTML = Object.entries(campMap).sort((a, b) => b[1] - a[1]).map(([l, v]) => `
-                <div class="p-4 bg-slate-50 rounded-2xl flex justify-between items-center border border-slate-100">
-                    <div><p class="text-[10px] font-black uppercase text-slate-400 mb-1 leading-none">${l}</p>
-                    <p class="text-[12px] font-bold text-blue-500 leading-none">${Math.round((v / totalHrs) * 100)}%</p></div>
-                    <p class="text-lg font-black text-slate-800">${v.toFixed(1)}h</p>
-                </div>`).join('');
-
-            // Grid de Supervisores
+            // Supervisores
             const supers = [...new Set(globalData.map(d => d.supervisor))].sort();
             document.getElementById('supervisor_grid').innerHTML = supers.map(s => {
                 const dSup = globalData.filter(x => x.supervisor === s);
-                const hrs = dSup.reduce((a, b) => a + b.segundos, 0) / 3600;
-                const vRel = Math.round((hrs / totalHrs) * 100);
-                
-                const hPre = dSup.filter(x => x.categoria === "PREPAGO").reduce((a, b) => a + b.segundos, 0) / 3600;
-                const hPos = dSup.filter(x => x.categoria === "POSPAGO").reduce((a, b) => a + b.segundos, 0) / 3600;
-                const hOth = dSup.filter(x => x.categoria === "OTROS").reduce((a, b) => a + b.segundos, 0) / 3600;
-
-                return `
-                    <div class="sup-card p-6">
-                        <p class="text-[11px] font-black text-blue-900 border-b pb-2 mb-4 uppercase italic tracking-tighter">${s}</p>
-                        <div class="text-center mb-4">
-                            <p class="stat-label text-[8px]">Horas Totales</p>
-                            <div class="flex items-baseline justify-center gap-2">
-                                <p class="text-3xl font-black text-slate-800">${hrs.toFixed(1)}h</p>
-                                <p class="text-sm font-bold text-blue-500 italic">(${vRel}%)</p>
-                            </div>
-                        </div>
-                        <div class="grid grid-cols-3 gap-2">
-                            <div class="bg-emerald-50 p-2 rounded-xl text-center"><p class="stat-label text-[6px]">Pre</p><p class="text-[11px] font-black">${hPre.toFixed(1)}h</p></div>
-                            <div class="bg-blue-50 p-2 rounded-xl text-center"><p class="stat-label text-[6px]">Pos</p><p class="text-[11px] font-black">${hPos.toFixed(1)}h</p></div>
-                            <div class="bg-slate-50 p-2 rounded-xl text-center"><p class="stat-label text-[6px]">Oth</p><p class="text-[11px] font-black">${hOth.toFixed(1)}h</p></div>
-                        </div>
-                    </div>`;
+                return `<div class="sup-card p-6 text-center"><p class="stat-label border-b mb-2">${s}</p><p class="text-3xl font-black">${dSup.length}</p></div>`;
             }).join('');
         }
     </script>
 </body>
 </html>
-
