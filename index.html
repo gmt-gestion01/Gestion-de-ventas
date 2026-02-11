@@ -117,23 +117,40 @@
     }
 }
 
-        function processCSV(text) {
-            const lines = text.split(/\r?\n/).filter(l => l.trim() !== "");
-            const sep = lines[0].includes(';') ? ';' : ',';
-            const globalData = lines.slice(1).map(line => {
-                const c = line.split(sep).map(x => x.replace(/['"]+/g, '').trim());
-                if (!c[0]) return null;
-                let m = 0; if(c[7] && c[7].toUpperCase() !== "SIN RECARGA") m = parseFloat(c[7].replace(/[^0-9.]/g, '')) || 0;
-                const valAlta = c[3] ? c[3].toUpperCase() : "";
-                const esAlta = valAlta !== "" && valAlta !== "SIN ALTA" && valAlta !== "NO";
-                const valTraf = c[6] ? c[6].toUpperCase() : "";
-                const esTrafico = valTraf === "SI" || valTraf === "CON TRAFICO" || valTraf === "TRAFICO";
-                const valEnrol = c[8] ? c[8].toUpperCase() : "";
-                const esEnrolado = valEnrol === "SI" || valEnrol === "ENROLADO";
-                return { dn: c[0], fVenta: c[1], supervisor: c[2] || "S/S", esAlta, esTrafico, esEnrolado, recargaVal: m };
-            }).filter(d => d !== null);
-            render(globalData);
+       function processCSV(text) {
+    const lines = text.split(/\r?\n/).filter(l => l.trim() !== "");
+    const sep = lines[0].includes(';') ? ';' : ',';
+    
+    globalData = lines.slice(1).map(line => {
+        // Limpiamos espacios extra de cada celda con .trim()
+        const c = line.split(sep).map(x => x.replace(/['"]+/g, '').trim());
+        if (!c[0]) return null;
+        
+        // Procesamos la recarga (Columna 7)
+        let m = 0; 
+        if(c[7] && !c[7].toUpperCase().includes("SIN RECARGA")) {
+            m = parseFloat(c[7].replace(/[^0-9.]/g, '')) || 0;
         }
+
+        // Simplificamos la detección de SI/CON TRAFICO/ENROLADO
+        const esAlta = c[3] && !c[3].toUpperCase().includes("SIN ALTA") && c[3] !== "";
+        const esTrafico = c[6] && c[6].toUpperCase().includes("TRAFICO");
+        const esEnrolado = c[8] && c[8].toUpperCase().includes("ENROLADO");
+
+        return { 
+            dn: c[0], 
+            fVenta: c[1], 
+            supervisor: c[2] || "S/S", 
+            esAlta, 
+            esTrafico, 
+            esEnrolado, 
+            recargaTxt: c[7] || "SIN RECARGA", 
+            recargaVal: m 
+        };
+    }).filter(d => d !== null);
+    
+    render();
+}
 
         // (Funciones de renderizado setStatus y render se mantienen iguales, adaptando el paso de data)
         function setStatus(total, metaUnit, dias, idFlag, idCumple, idGap) {
@@ -187,3 +204,4 @@
 </body>
 
 </html>
+
