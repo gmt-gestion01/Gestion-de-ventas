@@ -24,10 +24,10 @@
 
     <div id="login-screen">
         <div class="bg-white p-10 rounded-[3rem] shadow-2xl w-[90%] max-w-md text-center">
-            <h2 class="text-2xl font-black text-slate-800 mb-6 uppercase italic">Acceso GMT</h2>
+            <h2 class="text-2xl font-black text-slate-800 mb-6 uppercase italic tracking-tighter">Acceso GMT</h2>
             <div class="space-y-4">
-                <input type="text" id="user" placeholder="Usuario" class="w-full p-4 rounded-2xl bg-slate-50 border outline-none font-bold">
-                <input type="password" id="pass" placeholder="Contraseña" class="w-full p-4 rounded-2xl bg-slate-50 border outline-none font-bold">
+                <input type="text" id="user" placeholder="Usuario" class="w-full p-4 rounded-2xl bg-slate-50 border outline-none font-bold text-center">
+                <input type="password" id="pass" placeholder="Contraseña" class="w-full p-4 rounded-2xl bg-slate-50 border outline-none font-bold text-center">
                 <button onclick="checkLogin()" class="w-full bg-blue-800 text-white font-black py-4 rounded-2xl shadow-lg active:scale-95 uppercase">Ingresar</button>
                 <p id="login-err" class="text-red-500 text-xs font-black hidden">CREDENCIALES INCORRECTAS</p>
             </div>
@@ -54,7 +54,7 @@
         <div id="kpi_main_area" class="glass-card rounded-[3rem] overflow-hidden mb-8 shadow-xl"></div>
 
         <div class="glass-card p-8 rounded-[2.5rem] mb-8">
-            <h4 class="stat-label mb-6 italic text-center text-slate-600 uppercase italic">Ventas Diarias vs Objetivos (GMT/Movistar)</h4>
+            <h4 class="stat-label mb-6 italic text-center text-slate-600 uppercase italic">Tendencia vs Metas (Estático)</h4>
             <div id="g_tendencia" style="height: 400px; width: 100%;"></div>
         </div>
 
@@ -86,7 +86,7 @@
             try {
                 const response = await fetch('data.csv?v=' + Date.now());
                 if (response.ok) processData(await response.text());
-            } catch (e) { console.log("Modo manual activo."); }
+            } catch (e) { console.log("Modo manual."); }
         }
 
         document.getElementById('local_file').onchange = e => {
@@ -108,12 +108,11 @@
                 const esActivacion = c[4] && c[4].toUpperCase().includes("ACTIVACION");
                 const esTrafico = c[6] && c[6].toUpperCase().includes("TRAFICO");
                 const esEnrolado = c[8] && c[8].toUpperCase().includes("ENROLADO");
-                let recVal = 0;
-                if(c[7] && !c[7].toUpperCase().includes("SIN")) recVal = parseFloat(c[7].replace(/[^0-9.]/g, '')) || 0;
+                let rv = 0; if(c[7] && !c[7].toUpperCase().includes("SIN")) rv = parseFloat(c[7].replace(/[^0-9.]/g, '')) || 0;
 
                 return {
                     fVenta: c[1], supervisor: c[2] || "S/S", esAltaReal, esActivacion, esTrafico, esEnrolado,
-                    recargaTxt: c[7] || "SIN RECARGA", recargaVal: recVal,
+                    recargaTxt: c[7] || "SIN RECARGA", recargaVal: rv,
                     mes: mesIdx !== -1 ? c[mesIdx].toLowerCase() : "febrero"
                 };
             }).filter(d => d !== null);
@@ -143,19 +142,19 @@
             document.getElementById('kpi_main_area').innerHTML = `
                 <div class="grid grid-cols-1 md:grid-cols-3 text-white text-center italic font-black">
                     <div class="bg-main-dark p-10 md:border-r border-white/10">
-                        <p class="text-[10px] font-black uppercase tracking-[0.2em] text-blue-200 mb-2">Ventas Brutas</p>
+                        <p class="stat-label text-blue-200 mb-2">Ventas Brutas</p>
                         <h2 class="text-7xl leading-none">${total}</h2>
-                        <span class="text-[11px] font-bold text-blue-300/80 uppercase">Unidades Totales</span>
+                        <span class="text-[11px] font-bold text-blue-300/80 uppercase">Total del Mes</span>
                     </div>
                     <div class="bg-movistar p-10 md:border-r border-white/10">
-                        <p class="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-100 mb-2">Meta Movistar (509)</p>
+                        <p class="stat-label text-emerald-100 mb-2">Meta Movistar (509)</p>
                         <div class="flex flex-col items-center">
                             <div class="flex items-center mb-1"><span class="flag-dot" style="background:${mov.color}"></span><h2 class="text-6xl">${mov.perc}%</h2></div>
                             <span class="text-3xl text-white/90">${(mov.gap >= 0 ? "+" : "") + mov.gap}</span>
                         </div>
                     </div>
                     <div class="bg-gmt p-10">
-                        <p class="text-[10px] font-black uppercase tracking-[0.2em] text-orange-100 mb-2">Meta GMT (604)</p>
+                        <p class="stat-label text-orange-100 mb-2">Meta GMT (604)</p>
                         <div class="flex flex-col items-center">
                             <div class="flex items-center mb-1"><span class="flag-dot" style="background:${gmt.color}"></span><h2 class="text-6xl">${gmt.perc}%</h2></div>
                             <span class="text-3xl text-white/90">${(gmt.gap >= 0 ? "+" : "") + gmt.gap}</span>
@@ -163,34 +162,14 @@
                     </div>
                 </div>
                 <div class="p-10 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-6 text-center bg-white">
-                    <div class="border-r border-slate-100">
-                        <p class="stat-label text-blue-600 mb-2">Activación</p>
-                        <span class="text-4xl font-black text-slate-800">${total>0?Math.round((data.filter(d=>d.esActivacion).length/total)*100):0}%</span>
-                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">${data.filter(d=>d.esActivacion).length} Registros</p>
-                    </div>
-                    <div class="md:border-r border-slate-100">
-                        <p class="stat-label text-blue-800 mb-2">Alta Real</p>
-                        <span class="text-4xl font-black text-slate-800">${total>0?Math.round((data.filter(d=>d.esAltaReal).length/total)*100):0}%</span>
-                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">${data.filter(d=>d.esAltaReal).length} Registros</p>
-                    </div>
-                    <div class="border-r border-slate-100">
-                        <p class="stat-label text-orange-500 mb-2">Tráfico</p>
-                        <span class="text-4xl font-black text-slate-800">${total>0?Math.round((data.filter(d=>d.esTrafico).length/total)*100):0}%</span>
-                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">${data.filter(d=>d.esTrafico).length} Registros</p>
-                    </div>
-                    <div class="border-r border-slate-100">
-                        <p class="stat-label text-blue-400 mb-2">ARPU</p>
-                        <span class="text-4xl font-black text-slate-800">$${data.filter(d=>d.recargaVal>0).length > 0 ? Math.round(data.filter(d=>d.recargaVal>0).reduce((s,d)=>s+d.recargaVal,0)/data.filter(d=>d.recargaVal>0).length) : 0}</span>
-                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">${data.filter(d=>d.recargaVal>0).length} Recargas</p>
-                    </div>
-                    <div>
-                        <p class="stat-label text-emerald-500 mb-2">Enrolado</p>
-                        <span class="text-4xl font-black text-slate-800">${total>0?Math.round((data.filter(d=>d.esEnrolado).length/total)*100):0}%</span>
-                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">${data.filter(d=>d.esEnrolado).length} Registros</p>
-                    </div>
+                    <div class="border-r border-slate-100"><p class="stat-label text-blue-600 mb-2 font-black">Activación</p><span class="text-4xl font-black text-slate-800">${total>0?Math.round((data.filter(d=>d.esActivacion).length/total)*100):0}%</span><p class="text-[10px] font-bold text-slate-400 uppercase">${data.filter(d=>d.esActivacion).length} ud</p></div>
+                    <div class="md:border-r border-slate-100"><p class="stat-label text-blue-800 mb-2 font-black">Alta Real</p><span class="text-4xl font-black text-slate-800">${total>0?Math.round((data.filter(d=>d.esAltaReal).length/total)*100):0}%</span><p class="text-[10px] font-bold text-slate-400 uppercase">${data.filter(d=>d.esAltaReal).length} ud</p></div>
+                    <div class="border-r border-slate-100"><p class="stat-label text-orange-500 mb-2 font-black">Tráfico</p><span class="text-4xl font-black text-slate-800">${total>0?Math.round((data.filter(d=>d.esTrafico).length/total)*100):0}%</span><p class="text-[10px] font-bold text-slate-400 uppercase">${data.filter(d=>d.esTrafico).length} ud</p></div>
+                    <div class="border-r border-slate-100"><p class="stat-label text-blue-400 mb-2 font-black">ARPU</p><span class="text-4xl font-black text-slate-800">$${data.filter(d=>d.recargaVal>0).length > 0 ? Math.round(data.filter(d=>d.recargaVal>0).reduce((s,d)=>s+d.recargaVal,0)/data.filter(d=>d.recargaVal>0).length) : 0}</span><p class="text-[10px] font-bold text-slate-400 uppercase">${data.filter(d=>d.recargaVal>0).length} con Rec.</p></div>
+                    <div><p class="stat-label text-emerald-500 mb-2 font-black italic">Enrolado</p><span class="text-4xl font-black text-slate-800">${total>0?Math.round((data.filter(d=>d.esEnrolado).length/total)*100):0}%</span><p class="text-[10px] font-bold text-slate-400 uppercase">${data.filter(d=>d.esEnrolado).length} ud</p></div>
                 </div>`;
 
-            // Gráfica con AMBAS metas restablecidas
+            // Gráfica con BLOQUEO de interacción
             const counts = dates.map(dt => data.filter(d => d.fVenta === dt).length);
             Plotly.newPlot('g_tendencia', [
                 { x: dates, y: counts, name: 'Reales', type: 'scatter', mode: 'lines+markers+text', text: counts, textposition: 'top center', line: {color: '#1e3a8a', width: 4, shape: 'spline'} },
@@ -201,7 +180,10 @@
                 margin: {t:30, b:40, l:40, r:20}, 
                 showlegend: true, 
                 legend: { orientation: 'h', y: -0.2 } 
-            }, {responsive: true});
+            }, {
+                staticPlot: true, // ESTO BLOQUEA LA GRÁFICA COMPLETAMENTE
+                responsive: true
+            });
 
             const recMap = {};
             data.forEach(d => { recMap[d.recargaTxt] = (recMap[d.recargaTxt] || 0) + 1; });
