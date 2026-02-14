@@ -44,7 +44,8 @@
                 <p class="text-slate-400 font-bold text-[11px] uppercase tracking-[0.45em] mt-[-4px] pl-1">Análisis de Eficiencia | 2026</p>
             </div>
             <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-                <select id="month_filter" onchange="render()" class="bg-white border-2 border-slate-200 px-6 py-3 rounded-xl text-xs font-black uppercase text-slate-700 outline-none shadow-sm cursor-pointer"></select>
+                <select id="month_filter" onchange="updateDayFilter()" class="bg-white border-2 border-slate-200 px-4 py-3 rounded-xl text-xs font-black uppercase text-slate-700 outline-none shadow-sm cursor-pointer min-w-[120px]"></select>
+                <select id="day_filter" onchange="render()" class="bg-white border-2 border-slate-200 px-4 py-3 rounded-xl text-xs font-black uppercase text-slate-700 outline-none shadow-sm cursor-pointer min-w-[150px]"></select>
                 <label class="bg-blue-800 px-8 py-3 rounded-xl text-xs font-black cursor-pointer text-white shadow-lg text-center uppercase">
                     📂 Cargar CSV <input type="file" id="local_file" accept=".csv" class="hidden">
                 </label>
@@ -121,18 +122,37 @@
             const selector = document.getElementById('month_filter');
             selector.innerHTML = meses.map(m => `<option value="${m}">${m.toUpperCase()}</option>`).join('');
             if(meses.length > 0) selector.value = meses[meses.length - 1];
+            
+            updateDayFilter();
+        }
+
+        function updateDayFilter() {
+            const selMes = document.getElementById('month_filter').value;
+            const days = [...new Set(globalRawData.filter(d => d.mes === selMes).map(d => d.fVenta))].sort();
+            const selector = document.getElementById('day_filter');
+            
+            // Texto actualizado a "DÍA DE VENTA"
+            selector.innerHTML = `<option value="ALL">TODOS LOS DÍAS</option>` + 
+                                days.map(d => `<option value="${d}">DÍA DE VENTA: ${d}</option>`).join('');
+            
             render();
         }
 
         function render() {
             const selMes = document.getElementById('month_filter').value;
-            const data = globalRawData.filter(d => d.mes === selMes);
+            const selDia = document.getElementById('day_filter').value;
+
+            let data = globalRawData.filter(d => d.mes === selMes);
+            if (selDia !== "ALL") {
+                data = data.filter(d => d.fVenta === selDia);
+            }
+
             const total = data.length;
             const dates = [...new Set(data.map(d => d.fVenta))].sort();
-            const dias = dates.length || 1;
+            const diasActivos = (selDia === "ALL") ? (dates.length || 1) : 1;
 
             const calcMeta = (t, m) => {
-                const obj = dias * m;
+                const obj = diasActivos * m;
                 const perc = Math.round((t/obj)*100) || 0;
                 return { perc, gap: t - obj, color: perc >= 98 ? '#4ade80' : perc < 89 ? '#f87171' : '#fbbf24' };
             };
@@ -144,17 +164,17 @@
                     <div class="bg-main-dark p-10 md:border-r border-white/10">
                         <p class="stat-label text-blue-200 mb-2">Ventas Brutas</p>
                         <h2 class="text-7xl leading-none">${total}</h2>
-                        <span class="text-[11px] font-bold text-blue-300/80 uppercase">Total del Mes</span>
+                        <span class="text-[11px] font-bold text-blue-300/80 uppercase">${selDia === 'ALL' ? 'Acumulado Mes' : 'Corte del Día'}</span>
                     </div>
                     <div class="bg-movistar p-10 md:border-r border-white/10">
-                        <p class="stat-label text-emerald-100 mb-2">Meta Movistar (509)</p>
+                        <p class="stat-label text-emerald-100 mb-2">Meta Movistar (${509 * diasActivos})</p>
                         <div class="flex flex-col items-center">
                             <div class="flex items-center mb-1"><span class="flag-dot" style="background:${mov.color}"></span><h2 class="text-6xl">${mov.perc}%</h2></div>
                             <span class="text-3xl text-white/90">${(mov.gap >= 0 ? "+" : "") + mov.gap}</span>
                         </div>
                     </div>
                     <div class="bg-gmt p-10">
-                        <p class="stat-label text-orange-100 mb-2">Meta GMT (604)</p>
+                        <p class="stat-label text-orange-100 mb-2">Meta GMT (${604 * diasActivos})</p>
                         <div class="flex flex-col items-center">
                             <div class="flex items-center mb-1"><span class="flag-dot" style="background:${gmt.color}"></span><h2 class="text-6xl">${gmt.perc}%</h2></div>
                             <span class="text-3xl text-white/90">${(gmt.gap >= 0 ? "+" : "") + gmt.gap}</span>
@@ -169,7 +189,7 @@
                     <div><p class="stat-label text-emerald-500 mb-2 font-black italic">Enrolado</p><span class="text-4xl font-black text-slate-800">${total>0?Math.round((data.filter(d=>d.esEnrolado).length/total)*100):0}%</span><p class="text-[10px] font-bold text-slate-400 uppercase">${data.filter(d=>d.esEnrolado).length} ud</p></div>
                 </div>`;
 
-            // Gráfica con BLOQUEO de interacción
+            // Gráfica
             const counts = dates.map(dt => data.filter(d => d.fVenta === dt).length);
             Plotly.newPlot('g_tendencia', [
                 { x: dates, y: counts, name: 'Reales', type: 'scatter', mode: 'lines+markers+text', text: counts, textposition: 'top center', line: {color: '#1e3a8a', width: 4, shape: 'spline'} },
@@ -181,10 +201,11 @@
                 showlegend: true, 
                 legend: { orientation: 'h', y: -0.2 } 
             }, {
-                staticPlot: true, // ESTO BLOQUEA LA GRÁFICA COMPLETAMENTE
+                staticPlot: true,
                 responsive: true
             });
 
+            // Lista de recargas
             const recMap = {};
             data.forEach(d => { recMap[d.recargaTxt] = (recMap[d.recargaTxt] || 0) + 1; });
             document.getElementById('recarga_list').innerHTML = Object.entries(recMap).sort((a,b)=>b[1]-a[1]).map(([l,v]) => `
@@ -193,6 +214,7 @@
                     <p class="text-lg font-black text-slate-800">${v}</p>
                 </div>`).join('');
 
+            // Grid de supervisores
             const supers = [...new Set(data.map(d => d.supervisor))].sort();
             document.getElementById('supervisor_grid').innerHTML = supers.map(s => {
                 const dSup = data.filter(x => x.supervisor === s);
